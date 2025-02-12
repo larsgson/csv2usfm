@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fileOpen } from 'browser-fs-access'
+// import { fileOpen } from 'browser-fs-access'
 import Header from './Header'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -7,6 +7,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {htmlText} from '../data/ruth'
 
 export default function AppLayout() {
+  // eslint-disable-next-line no-unused-vars
   const [usfmText, setUsfmText] = useState()
   // const [htmlText, setHtmlText] = useState()
   const [loading, setLoading] = useState(false)
