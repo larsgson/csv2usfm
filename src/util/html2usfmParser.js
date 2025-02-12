@@ -142,8 +142,7 @@ function html2usfm(htmlText) {
   const tempEl = tmpDoc.documentElement
   var links = Array.from(tempEl.querySelectorAll("a"))
   const refList = links.map(link =>{
-    // return decodeURI(`${link.innerText} -> ${link.href}`)
-    return `${link.innerText} -> ${link.href}`
+    return decodeURI(`${link.innerText} -> ${link.href}`)
   })
   return `All references: <br/><br/>${refList.join("<br/>")}`
 }
