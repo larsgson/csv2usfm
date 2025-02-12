@@ -21,7 +21,7 @@ The app is available [here](https://html2usfm.netlify.app/)
 
 ### Purpose
 
-This app is basically just a wrapper for conversion code - in order to make it easy to handle such conversions.
+This app is basically just a wrapper for some conversion code - in order to make it easy to handle such conversions.
 
 ### Built With
 
