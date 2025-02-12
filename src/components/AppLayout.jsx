@@ -90,7 +90,7 @@ export default function AppLayout() {
         >
           <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
-              Html parser ouput (during the testing phase)
+              Html parser ouput (only during the testing phase)
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2 }}>
               <span dangerouslySetInnerHTML={{__html: usfmText}} />
