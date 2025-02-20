@@ -1,12 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 // import { fileOpen } from 'browser-fs-access'
 import Header from './Header'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-// import pkg from 'usfm-grammar'
-// const {USFMParser} = pkg
+import { USFMParser } from 'usfm-grammar-web';
 
 // import {htmlText} from '../data/ruth'
 import {csvData} from '../data/titus-csv'
@@ -34,6 +33,15 @@ export default function AppLayout() {
   const [usjLoaded, setUsjLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+
+  useEffect(() => {
+    const initParser = async () => {
+      await USFMParser.init("https://cdn.jsdelivr.net/npm/usfm-grammar-web@3.0.0/tree-sitter-usfm.wasm",
+                            "https://cdn.jsdelivr.net/npm/usfm-grammar-web@3.0.0/tree-sitter.wasm");
+
+    };
+    initParser();
+  }, []);
 
   const handleClose = () => setModalOpen(false)
 
@@ -67,10 +75,10 @@ export default function AppLayout() {
     console.log(tempUsj)
     setUsjLoaded(true)
     setUsjText(JSON.stringify(tempUsj))
+    const usfmParser2 = new USFMParser(null, tempUsj) 
+    const usfmGen = usfmParser2.usfm;
     // const usfmParser2 = new USFMParser(null, tempUsj) // USJ to USFM
     // const usfmGen = usfmParser2.usfm;
-    const usfmGen = "Test";
-    console.log(usfmGen);
     setUsfmText(usfmGen)
     setLoading(false)
     setModalOpen(true)
@@ -79,7 +87,7 @@ export default function AppLayout() {
   const appBarAndWorkSpace = 
     <div>
       { usjLoaded && (
-         <div>{usjText}</div>
+         <div>{usfmText}</div>
       )}
     </div>
 
@@ -104,8 +112,8 @@ export default function AppLayout() {
               USJ ouput (only during the testing phase)
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              <span dangerouslySetInnerHTML={{__html: usfmText}} />
-            </Typography>
+              <span>{usjText}</span>
+          </Typography>
           </Box>
         </Modal>
       </div>

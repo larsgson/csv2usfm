@@ -68,7 +68,7 @@ importers:
       styled-components:
         specifier: ^6.0.7
         version: 6.1.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      usfm-grammar:
+      usfm-grammar-web:
         specifier: ^3.0.0
         version: 3.0.0
       utf8:
@@ -1570,17 +1570,6 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  node-addon-api@7.1.1:
-    resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
-
-  node-addon-api@8.3.0:
-    resolution: {integrity: sha512-8VOpLHFrOQlAH+qA0ZzuGRlALRA6/LVh8QJldbrC4DY0hXoMP0l4Acq8TzFC018HztWiRqyCEj2aTWY2UvnJUg==}
-    engines: {node: ^18 || ^20 || >= 21}
-
-  node-gyp-build@4.8.4:
-    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
-    hasBin: true
-
   node-html-parser@7.0.1:
     resolution: {integrity: sha512-KGtmPY2kS0thCWGK0VuPyOS+pBKhhe8gXztzA2ilAOhbUbxa9homF1bOyKvhGzMLXUoRds9IOmr/v5lr/lqNmA==}
 
@@ -1934,18 +1923,6 @@ packages:
   tiny-warning@1.0.3:
     resolution: {integrity: sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==}
 
-  tree-sitter-usfm3@3.0.0:
-    resolution: {integrity: sha512-/g9W5C8BL6/Xq1YYOXSvZmM5Ql8DnWG7paWAic7ww7ONmzHXV64rdMWgpF8KtKbfLog46OtUgkfU01VyLKEPag==}
-    peerDependencies:
-      tree-sitter: ^0.21.0
-      tree_sitter: '*'
-    peerDependenciesMeta:
-      tree_sitter:
-        optional: true
-
-  tree-sitter@0.21.1:
-    resolution: {integrity: sha512-7dxoA6kYvtgWw80265MyqJlkRl4yawIjO7S5MigytjELkX43fV2WsAXzsNfO7sBpPPCF5Gp0+XzHk0DwLCq3xQ==}
-
   tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
 
@@ -1986,8 +1963,8 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
-  usfm-grammar@3.0.0:
-    resolution: {integrity: sha512-V5e1CLtv8mWnHTrcWQL4lj7G1EcV3rqGnSA/SiBt1FgDthe3KNq0LQk0sjufxAnta0JaWnloEScT7tLHJ7xLtQ==}
+  usfm-grammar-web@3.0.0:
+    resolution: {integrity: sha512-j27qmIXGSLwH2mseIWyoc1O9xer0LhG53N9JJ6vomohmYREx4sA/1u/4aQVyCL/12YnCfI6/tyM8qZK+oio9xg==}
 
   utf8@3.0.0:
     resolution: {integrity: sha512-E8VjFIQ/TyQgp+TZfS6l8yp/xWppSAHzidGiRrqe4bK4XP9pTRyKFgGJpO3SN7zdX4DeomTrwaseCHovfpFcqQ==}
@@ -3736,12 +3713,6 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  node-addon-api@7.1.1: {}
-
-  node-addon-api@8.3.0: {}
-
-  node-gyp-build@4.8.4: {}
-
   node-html-parser@7.0.1:
     dependencies:
       css-select: 5.1.0
@@ -4144,17 +4115,6 @@ snapshots:
 
   tiny-warning@1.0.3: {}
 
-  tree-sitter-usfm3@3.0.0(tree-sitter@0.21.1):
-    dependencies:
-      node-addon-api: 7.1.1
-      node-gyp-build: 4.8.4
-      tree-sitter: 0.21.1
-
-  tree-sitter@0.21.1:
-    dependencies:
-      node-addon-api: 8.3.0
-      node-gyp-build: 4.8.4
-
   tslib@2.6.2: {}
 
   type-check@0.4.0:
@@ -4213,15 +4173,11 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  usfm-grammar@3.0.0:
+  usfm-grammar-web@3.0.0:
     dependencies:
       ajv: 8.17.1
-      tree-sitter: 0.21.1
-      tree-sitter-usfm3: 3.0.0(tree-sitter@0.21.1)
       xmldom: 0.6.0
       xpath: 0.0.34
-    transitivePeerDependencies:
-      - tree_sitter
 
   utf8@3.0.0: {}
 
