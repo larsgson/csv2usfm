@@ -35,3 +35,7 @@ export const parseLine = (ws,usj,lineItem) => {
   if (lineItem?.pnc) usj.content.push(lineItem?.pnc)
   if (lineItem?.endQ) usj.content.push(lineItem?.endQ)
 }
+
+// ToDo: Check possibly streaming for big size CSV:
+// https://www.papaparse.com/faq#streaming
+// https://deadsimplechat.com/blog/csv-files-with-nodejs-papaparse/
