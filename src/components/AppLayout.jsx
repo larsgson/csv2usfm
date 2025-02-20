@@ -5,9 +5,13 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import {htmlText} from '../data/ruth'
-import html2usfm from '../util/html2usfmParser'
+// import pkg from 'usfm-grammar'
+// const {USFMParser} = pkg
 
+// import {htmlText} from '../data/ruth'
+import {csvData} from '../data/titus-csv'
+// import html2usfm from '../util/html2usfmParser'
+import csv2usj from '../util/csv2usjParser'
 
 import Modal from '@mui/material/Modal'
 
@@ -26,9 +30,9 @@ const style = {
 export default function AppLayout() {
   // eslint-disable-next-line no-unused-vars
   const [usfmText, setUsfmText] = useState()
-  // const [htmlText, setHtmlText] = useState()
+  const [usjText, setUsjText] = useState()
+  const [usjLoaded, setUsjLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [htmlFileLoaded, setHtmlFileLoaded] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
 
   const handleClose = () => setModalOpen(false)
@@ -57,27 +61,34 @@ export default function AppLayout() {
     //   console.log("invalid file")
     // }
     // setHtmlText(htmlText)
-    setHtmlFileLoaded(true)
     // const tempUsfm = JSON.stringify(html2usfm(htmlText))
-    const tmpText = html2usfm(htmlText)
-    setUsfmText(tmpText)
+    // const tmpText = html2usfm(htmlText)
+    const tempUsj = csv2usj(csvData)
+    console.log(tempUsj)
+    setUsjLoaded(true)
+    setUsjText(JSON.stringify(tempUsj))
+    // const usfmParser2 = new USFMParser(null, tempUsj) // USJ to USFM
+    // const usfmGen = usfmParser2.usfm;
+    const usfmGen = "Test";
+    console.log(usfmGen);
+    setUsfmText(usfmGen)
     setLoading(false)
     setModalOpen(true)
   }
 
   const appBarAndWorkSpace = 
     <div>
-      { htmlFileLoaded && (
-        <div dangerouslySetInnerHTML={{__html: htmlText}} />
+      { usjLoaded && (
+         <div>{usjText}</div>
       )}
     </div>
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Paper sx={{ position: 'fixed', top: 0, left: 0, right: 0 }} elevation={3}>
-        {!htmlFileLoaded && !loading && 
+        {!usjLoaded && !loading && 
           (<Header 
-            title={"Html2Usfm Converter"}
+            title={"Csv2Usj Converter"}
             onOpenClick={handleOpen}
           />)}
       </Paper>
@@ -90,7 +101,7 @@ export default function AppLayout() {
         >
           <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
-              Html parser ouput (only during the testing phase)
+              USJ ouput (only during the testing phase)
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2 }}>
               <span dangerouslySetInnerHTML={{__html: usfmText}} />

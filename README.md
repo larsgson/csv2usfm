@@ -1,8 +1,8 @@
-# Html to Usfm Converter
+# CSV to USJ Converter
 
 - Bible resources format converter
 
-- based on the Html format from the BibleHub
+- based on the .xslx format from the BibleHub
 
 The app is available [here](https://html2usfm.netlify.app/)
 
@@ -10,7 +10,7 @@ The app is available [here](https://html2usfm.netlify.app/)
 
 ## Features
 
-- Offering an easy to use app for converting Bible books in Html format into the widely used USFM format
+- Offering an easy to use app for converting Bible books in CSV format into USJ format
 
 ---
 
