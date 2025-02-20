@@ -1,5 +1,5 @@
 {
-  "name": "html2usfm",
+  "name": "csv2usj",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -23,12 +23,14 @@
     "dompurify": "^3.0.5",
     "lodash": "4.17.21",
     "node-html-parser": "^7.0.1",
+    "papaparse": "^5.5.2",
     "prop-types": "^15.8.1",
     "pure-uuid": "^1.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.11.0",
     "styled-components": "^6.0.7",
+    "usfm-grammar-web": "^3.0.0",
     "utf8": "^3.0.0"
   },
   "devDependencies": {
