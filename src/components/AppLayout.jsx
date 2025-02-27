@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react'
 // import { fileOpen } from 'browser-fs-access'
 import Header from './Header'
@@ -6,6 +7,7 @@ import Paper from '@mui/material/Paper'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 import { USFMParser } from 'usfm-grammar-web';
+import SimpleEditor from './SimpleEditor'
 
 // import {htmlText} from '../data/ruth'
 import {csvData} from '../data/titus-csv'
@@ -84,23 +86,27 @@ export default function AppLayout() {
     setModalOpen(true)
   }
 
-  const appBarAndWorkSpace = 
-    <div>
-      { usjLoaded && (
-         <div>{usfmText}</div>
-      )}
-    </div>
+  const editorProps = {
+    docSetId: 'abc-xyz',
+    usfmText,
+    defaultOptions:{
+      editable: false,
+      sectionable: false,
+      blockable: false,
+      preview: true,
+    }
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Paper sx={{ position: 'fixed', top: 0, left: 0, right: 0 }} elevation={3}>
         {!usjLoaded && !loading && 
           (<Header 
-            title={"Csv2Usj Converter"}
+            title={"Csv2Usfm Converter"}
             onOpenClick={handleOpen}
           />)}
       </Paper>
-      <div>
+      {/* <div>
         <Modal
           open={modalOpen}
           onClose={handleClose}
@@ -116,8 +122,14 @@ export default function AppLayout() {
           </Typography>
           </Box>
         </Modal>
-      </div>
-      {!loading ? appBarAndWorkSpace : (
+      </div> */}
+      {usjLoaded && (
+        <div>
+          {usfmText}
+          {/* <SimpleEditor {...editorProps } /> */}
+        </div>
+      )}
+      {loading && (
         <Box 
           sx={{ 
             display: 'flex', 
@@ -127,6 +139,7 @@ export default function AppLayout() {
           <CircularProgress disableShrink/>
         </Box>
       )}
-      </Box>
+    </Box>
+
   )
 }
