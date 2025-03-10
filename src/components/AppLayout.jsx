@@ -6,8 +6,9 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import { USFMParser } from 'usfm-grammar-web';
+import { USFMParser } from 'usfm-grammar-web'
 import SimpleEditor from './SimpleEditor'
+import TextField from "@mui/material/TextField"
 
 // import {htmlText} from '../data/ruth'
 import {csvData} from '../data/titus-csv'
@@ -35,6 +36,7 @@ export default function AppLayout() {
   const [usjLoaded, setUsjLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [keepStrongNumbers, setKeepStrongNumbers] = useState(true)
 
   useEffect(() => {
     const initParser = async () => {
@@ -73,15 +75,12 @@ export default function AppLayout() {
     // setHtmlText(htmlText)
     // const tempUsfm = JSON.stringify(html2usfm(htmlText))
     // const tmpText = html2usfm(htmlText)
-    const tempUsj = csv2usj(csvData)
-    console.log(tempUsj)
+    const tempUsj = csv2usj(csvData,keepStrongNumbers)
     setUsjLoaded(true)
     setUsjText(JSON.stringify(tempUsj))
     const usfmParser2 = new USFMParser(null, tempUsj) 
-    const usfmGen = usfmParser2.usfm;
-    // const usfmParser2 = new USFMParser(null, tempUsj) // USJ to USFM
-    // const usfmGen = usfmParser2.usfm;
-    setUsfmText(usfmGen)
+    const usfmStr = usfmParser2.usfm;
+    setUsfmText(usfmStr)
     setLoading(false)
     setModalOpen(true)
   }
@@ -96,13 +95,14 @@ export default function AppLayout() {
       preview: true,
     }
   }
-
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Paper sx={{ position: 'fixed', top: 0, left: 0, right: 0 }} elevation={3}>
         {!usjLoaded && !loading && 
           (<Header 
             title={"Csv2Usfm Converter"}
+            keepStrongNumbers={keepStrongNumbers}
+            onStrongNumbersChanged={()=>setKeepStrongNumbers(prev => (!prev))}
             onOpenClick={handleOpen}
           />)}
       </Paper>
@@ -124,10 +124,21 @@ export default function AppLayout() {
         </Modal>
       </div> */}
       {usjLoaded && (
-        <div>
-          {usfmText}
-          {/* <SimpleEditor {...editorProps } /> */}
-        </div>
+        <TextField
+          label="Readonly"
+          variant="outlined"
+          multiline
+          defaultValue={usfmText}
+          inputProps={{ readOnly: true }}
+          sx={{
+            width: "100%",
+            marginTop: 3,
+          }}
+        />
+        // <Typography>
+        //   <span>{usfmText}</span>
+        // </Typography>
+        // <SimpleEditor {...editorProps } />
       )}
       {loading && (
         <Box 

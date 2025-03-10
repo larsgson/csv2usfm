@@ -59,15 +59,25 @@ export const parseLinePart1 = (ws,content,lineItem) => {
 export const parseLinePart2 = (ws,content,lineItem) => {
   if (lineItem?.space) content.push(lineItem?.space)
   if (lineItem?.begQ) content.push(lineItem?.begQ)  
-  if (lineItem?.BSBversion) {
-    content.push({
-      type: "char",
-      marker: "w",
-      content: [ `${lineItem.BSBversion}` ],
-      strong: lineItem?.StrGrk
-    })
+  let curStr = ""  
+  if (lineItem?.BSBversion) curStr = lineItem.BSBversion.trim()
+  if (lineItem?.pnc) {
+    curStr+=lineItem?.pnc+' '
+  } else {
+    curStr+=' '
   }
-  if (lineItem?.pnc) content.push(lineItem?.pnc)
+  if (lineItem?.BSBversion) {
+    if (ws.keepStrongNumbers) {
+      content.push({
+        type: "char",
+        marker: "w",
+        content: [ `${curStr}` ],
+        strong: lineItem?.StrGrk
+      })
+    } else {
+      content.push(curStr)
+    }
+  }
   if (lineItem?.endQ) content.push(lineItem?.endQ)
 }
 
