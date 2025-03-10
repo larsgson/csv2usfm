@@ -130,7 +130,10 @@ export default function AppLayout() {
           multiline
           defaultValue={usfmText}
           inputProps={{ readOnly: true }}
-          sx={{width: "100%"}}
+          sx={{
+            width: "100%",
+            marginTop: 3,
+          }}
         />
         // <Typography>
         //   <span>{usfmText}</span>
