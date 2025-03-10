@@ -60,12 +60,16 @@ export const parseLinePart2 = (ws,content,lineItem) => {
   if (lineItem?.space) content.push(lineItem?.space)
   if (lineItem?.begQ) content.push(lineItem?.begQ)  
   if (lineItem?.BSBversion) {
-    content.push({
-      type: "char",
-      marker: "w",
-      content: [ `${lineItem.BSBversion}` ],
-      strong: lineItem?.StrGrk
-    })
+    if (ws.keepStrongNumbers) {
+      content.push({
+        type: "char",
+        marker: "w",
+        content: [ `${lineItem.BSBversion}` ],
+        strong: lineItem?.StrGrk
+      })
+    } else {
+      content.push(lineItem.BSBversion)
+    }
   }
   if (lineItem?.pnc) content.push(lineItem?.pnc)
   if (lineItem?.endQ) content.push(lineItem?.endQ)

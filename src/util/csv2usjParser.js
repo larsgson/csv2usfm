@@ -2,8 +2,9 @@ import Papa from 'papaparse'
 import {generateBookName, parseLinePart1, parseLinePart2} from '../util/singleLineParser'
 
 
-const parseCsv = (csvData) => {
+const csv2usj = (csvData,keepStrongNumbers) => {
   const ws = {
+    keepStrongNumbers,
     curCh: 1
   }
   const usjObj = {
@@ -44,10 +45,6 @@ const parseCsv = (csvData) => {
   )
   usjObj.content = topArr
   return usjObj
-}
-
-function csv2usj(csvData) {
-  return parseCsv(csvData)
 }
 
 export default csv2usj

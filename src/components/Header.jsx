@@ -5,6 +5,9 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import Fab from '@mui/material/Fab'
 import SourceIcon from '@mui/icons-material/Source'
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 const sx = {
   title: {
@@ -19,6 +22,8 @@ const sx = {
 export default function Header({
   title,
   onOpenClick,
+  keepStrongNumbers,
+  onStrongNumbersChanged
 }) 
 {
   return (
@@ -36,6 +41,18 @@ export default function Header({
           >
             {title}
           </Typography>
+          <FormGroup>
+            <FormControlLabel 
+              control={
+                <Checkbox
+                checked={keepStrongNumbers}
+                onChange={onStrongNumbersChanged}
+                inputProps={{ 'aria-label': 'strongs numbers' }}
+              />
+              }
+              label="Include Strongs Numbers" 
+            />
+          </FormGroup>
         </div>
         <>
           <Fab
