@@ -6,11 +6,11 @@ function strip(html){
 }
 
 // eslint-disable-next-line no-unused-vars
-export const generateBookName = (content,_lineItem) => {
+export const generateBookName = (content,bcvObj) => {
   content.push({
     type: "book",
     marker: "id",
-    code: "TIT",
+    code: `${bcvObj?.ptxId}`,
   })
   content.push({
     type: "para", 
@@ -20,7 +20,7 @@ export const generateBookName = (content,_lineItem) => {
   content.push({
     type: "para", 
     marker: "h", 
-    content: ["TITE \n"]
+    content: [`${bcvObj?.bookName}\n`]
   })
 }
 
@@ -39,7 +39,17 @@ export const generateBookName = (content,_lineItem) => {
 //   caller: "g",
 // },
 
-export const parseLinePart1 = (ws,content,lineItem) => {
+export const parseLinePart1 = (ws,content,lineItem,bcvObj) => {
+  const curCh = bcvObj?.ch
+  if ((curCh) && (ws.curCh !== bcvObj.ch)) {
+    ws.curCh = bcvObj.ch
+    content.push({
+      type: "chapter",
+      marker: "c",
+      number: bcvObj.ch,
+      sid: `${bcvObj.ptxId} ${bcvObj.ch}`
+    })
+  }
   if (lineItem?.Hdg) {
     content.push({
       type: "para",
@@ -56,17 +66,26 @@ export const parseLinePart1 = (ws,content,lineItem) => {
   }
 }
 
-export const parseLinePart2 = (ws,content,lineItem) => {
+export const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
+  const curV = bcvObj?.v
+  if ((curV) && (ws.curV !== bcvObj.v)) {
+    ws.curV = bcvObj.v
+    content.push({
+      type: "chapter",
+      marker: "v",
+      number: bcvObj.v,
+      sid: `${bcvObj.ptxId} ${bcvObj.ch}:${bcvObj.v}`
+    })
+  }
   if (lineItem?.space) content.push(lineItem?.space)
   if (lineItem?.begQ) content.push(lineItem?.begQ)  
-  let curStr = ""  
-  if (lineItem?.BSBversion) curStr = lineItem.BSBversion.trim()
-  if (lineItem?.pnc) {
-    curStr+=lineItem?.pnc+' '
-  } else {
-    curStr+=' '
-  }
   if (lineItem?.BSBversion) {
+    let curStr = lineItem.BSBversion.trim()
+    if (lineItem?.pnc) {
+      curStr+=lineItem?.pnc+' '
+    } else {
+      curStr+=' '
+    }
     if (ws.keepStrongNumbers) {
       content.push({
         type: "char",

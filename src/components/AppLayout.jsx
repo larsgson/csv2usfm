@@ -5,7 +5,6 @@ import Header from './Header'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import CircularProgress from '@mui/material/CircularProgress'
-import Typography from '@mui/material/Typography'
 import { USFMParser } from 'usfm-grammar-web'
 import SimpleEditor from './SimpleEditor'
 import TextField from "@mui/material/TextField"
@@ -124,21 +123,20 @@ export default function AppLayout() {
         </Modal>
       </div> */}
       {usjLoaded && (
-        <TextField
-          label="Readonly"
-          variant="outlined"
-          multiline
-          defaultValue={usfmText}
-          inputProps={{ readOnly: true }}
-          sx={{
-            width: "100%",
-            marginTop: 3,
-          }}
-        />
-        // <Typography>
-        //   <span>{usfmText}</span>
-        // </Typography>
-        // <SimpleEditor {...editorProps } />
+        <>
+          <TextField
+            label="Readonly"
+            variant="outlined"
+            multiline
+            defaultValue={usfmText}
+            inputProps={{ readOnly: true }}
+            sx={{
+              width: "100%",
+              marginTop: 3,
+            }}
+          />
+          <SimpleEditor {...editorProps } />
+        </>
       )}
       {loading && (
         <Box 
