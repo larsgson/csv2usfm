@@ -35,7 +35,7 @@ export default function AppLayout() {
   const [usjLoaded, setUsjLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [keepStrongNumbers, setKeepStrongNumbers] = useState(true)
+  const [keepStrongNumbers, setKeepStrongNumbers] = useState(false)
 
   useEffect(() => {
     const initParser = async () => {
@@ -79,7 +79,9 @@ export default function AppLayout() {
     setUsjText(JSON.stringify(tempUsj))
     const usfmParser2 = new USFMParser(null, tempUsj) 
     const usfmStr = usfmParser2.usfm;
-    setUsfmText(usfmStr)
+    const adaptedStr1 = usfmStr.replace(/\\v (\d*)\s*\n/g,"\n\\v $1 ")
+    const adaptedStr2 = adaptedStr1.replace(/\s*\n/g,"\n")
+    setUsfmText(adaptedStr2)
     setLoading(false)
     setModalOpen(true)
   }

@@ -10,7 +10,7 @@ export const generateBookName = (content,bcvObj) => {
   content.push({
     type: "book",
     marker: "id",
-    code: `${bcvObj?.ptxId}`,
+    code: `${bcvObj?.ptxId} - Berean Standard Bible`,
   })
   content.push({
     type: "para", 
@@ -22,6 +22,21 @@ export const generateBookName = (content,bcvObj) => {
     marker: "h", 
     content: [`${bcvObj?.bookName}\n`]
   })
+  content.push({
+    type: "para", 
+    marker: "toc2", 
+    content: [`${bcvObj?.bookName}\n`]
+  })
+  content.push({
+    type: "para", 
+    marker: "toc1", 
+    content: [`${bcvObj?.bookName}\n`]
+  })
+  content.push({
+    type: "para", 
+    marker: "mt1", 
+    content: [`${bcvObj?.bookName}\n`]
+  })  
 }
 
 // Probably use this instead of cross reference ? And also for footnotes?
@@ -97,7 +112,28 @@ export const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
       content.push(curStr)
     }
   }
-  if (lineItem?.endQ) content.push(lineItem?.endQ)
+  if (lineItem?.endQ) content.push(lineItem.endQ)
+  if (lineItem?.footnotes) {
+    content.push({
+      "type": "note",
+      "marker": "f",
+      "content": [
+        " ",
+        {
+          "type": "char",
+          "marker": "fr",
+          "content": [ `${ws.curCh}:${ws.curV} ` ]
+        },
+        {
+          "type": "char",
+          "marker": "ft",
+          "content": [ `${lineItem.footnotes}` ]
+        }
+      ],
+      "caller": "+"
+
+    })
+  }
 }
 
 // ToDo: Check possibly streaming for big size CSV:

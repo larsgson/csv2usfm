@@ -56,7 +56,7 @@ const csv2usj = (csvData,keepStrongNumbers) => {
       // - separate top level and level_1 based on any Par marker present in this line
       const curCh = bcvObj?.ch
       const newCh = ((curCh) && (ws.curCh !== bcvObj.ch)) 
-      if ((lineObj?.Par) && (newCh)) {
+      if ((lineObj?.Par) && ((newCh) || (level1Arr.length>0))) {
         if (level1Arr.length>0) {
           // Now dump all current level_1 content into a paragraph (in the content field)
           topArr.push({
@@ -66,18 +66,7 @@ const csv2usj = (csvData,keepStrongNumbers) => {
           })
           level1Arr = []    
         }
-        // Keep all content in topArr
         parseLinePart1(ws,topArr,lineObj,bcvObj)
-        parseLinePart2(ws,level1Arr,lineObj,bcvObj)
-      } else if ((lineObj?.Par) && (level1Arr.length>0)) {
-        parseLinePart1(ws,topArr,lineObj,bcvObj)
-        // First dump all current level_1 content into a paragraph (in the content field)
-        topArr.push({
-          type: "para",
-          marker: "p",
-          content: level1Arr
-        })
-        level1Arr = []    
         // Keep all content from now on in level1Arr
         parseLinePart2(ws,level1Arr,lineObj,bcvObj)
       } else {
@@ -88,6 +77,14 @@ const csv2usj = (csvData,keepStrongNumbers) => {
     }
   })
 
+  if (level1Arr.length>0) {
+    // Now dump all current level_1 content into a paragraph (in the content field)
+    topArr.push({
+      type: "para",
+      marker: "p",
+      content: level1Arr
+    })
+  }
   usjObj.content = topArr
   return usjObj
 }
