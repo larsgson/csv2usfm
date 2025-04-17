@@ -23,7 +23,9 @@ export default function Header({
   title,
   onOpenClick,
   keepStrongNumbers,
-  onStrongNumbersChanged
+  keepPlaceholdersNBrackets,
+  onStrongNumbersChanged,
+  onPlaceholdersNBracketsChanged
 }) 
 {
   return (
@@ -42,7 +44,7 @@ export default function Header({
             {title}
           </Typography>
           <FormGroup>
-            <FormControlLabel 
+          <FormControlLabel 
               control={
                 <Checkbox
                 checked={keepStrongNumbers}
@@ -51,6 +53,16 @@ export default function Header({
               />
               }
               label="Include Strongs Numbers" 
+            />
+            <FormControlLabel 
+              control={
+                <Checkbox
+                checked={keepPlaceholdersNBrackets}
+                onChange={onPlaceholdersNBracketsChanged}
+                inputProps={{ 'aria-label': 'strongs numbers' }}
+              />
+              }
+              label="Include Placeholders and Brackets" 
             />
           </FormGroup>
         </div>
