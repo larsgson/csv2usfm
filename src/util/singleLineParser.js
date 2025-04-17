@@ -10,49 +10,40 @@ export const generateBookName = (content,bcvObj) => {
   content.push({
     type: "book",
     marker: "id",
-    code: `${bcvObj?.ptxId} - Berean Standard Bible`,
-  })
-  content.push({
-    type: "para", 
-    marker: "ide", 
-    content: ["UTF-8\n"]
-  })
+    code: bcvObj?.ptxId,
+    content: ["- Berean Study Bible"]
+})
+  // content.push({
+  //   type: "para", 
+  //   marker: "ide", 
+  //   content: ["UTF-8"]
+  // })
   content.push({
     type: "para", 
     marker: "h", 
-    content: [`${bcvObj?.bookName}\n`]
-  })
-  content.push({
-    type: "para", 
-    marker: "toc2", 
-    content: [`${bcvObj?.bookName}\n`]
+    content: [`${bcvObj?.bookName}`]
   })
   content.push({
     type: "para", 
     marker: "toc1", 
-    content: [`${bcvObj?.bookName}\n`]
+    content: [`${bcvObj?.bookName}`]
+  })
+  content.push({
+    type: "para", 
+    marker: "toc2", 
+    content: [`${bcvObj?.bookName}`]
+  })
+  content.push({
+    type: "para", 
+    marker: "toc3",
+    content: [`${bcvObj?.bookName}`]
   })
   content.push({
     type: "para", 
     marker: "mt1", 
-    content: [`${bcvObj?.bookName}\n`]
+    content: [`${bcvObj?.bookName}`]
   })  
 }
-
-// Probably use this instead of cross reference ? And also for footnotes?
-// {
-//   type: "note",
-//   marker: "x",
-//   content: [
-//     { type: "char", marker: "xo", content: ["2.12  "] },
-//     {
-//       type: "char",
-//       marker: "xt",
-//       content: ["Ép 1:4. Col 1:22. 2 Ti 1:9."],
-//     },
-//   ],
-//   caller: "g",
-// },
 
 export const parseLinePart1 = (ws,content,lineItem,bcvObj) => {
   const curCh = bcvObj?.ch
@@ -61,22 +52,22 @@ export const parseLinePart1 = (ws,content,lineItem,bcvObj) => {
     content.push({
       type: "chapter",
       marker: "c",
-      number: bcvObj.ch,
-      sid: `${bcvObj.ptxId} ${bcvObj.ch}`
+      number: bcvObj.ch.toString(),
+      // sid: `${bcvObj.ptxId} ${bcvObj.ch}`
     })
   }
   if (lineItem?.Hdg) {
     content.push({
       type: "para",
       marker: "s1",
-      content: [ `${strip(lineItem.Hdg)} \n` ]
+      content: [ `${strip(lineItem.Hdg)}` ]
     })
   }
   if (lineItem?.Crossref) {
     content.push({
       type: "para",
       marker: "r",
-      content: [ `${strip(lineItem.Crossref)} \n` ]
+      content: [ `${strip(lineItem.Crossref)}` ]
     })
   }
 }
@@ -86,20 +77,29 @@ export const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
   if ((curV) && (ws.curV !== bcvObj.v)) {
     ws.curV = bcvObj.v
     content.push({
-      type: "chapter",
+      type: "verse",
       marker: "v",
-      number: bcvObj.v,
-      sid: `${bcvObj.ptxId} ${bcvObj.ch}:${bcvObj.v}`
+      number: bcvObj.v.toString(),
+      // sid: `${bcvObj.ptxId} ${bcvObj.ch}:${bcvObj.v}`
     })
   }
   if (lineItem?.space) content.push(lineItem?.space)
   if (lineItem?.begQ) content.push(lineItem?.begQ)  
   if (lineItem?.BSBversion) {
-    let curStr = lineItem.BSBversion.trim()
+    let curStr = lineItem.BSBversion?.trim()
+    if ((!ws.placeholdersNBrackets) && (lineItem.BSBversion === " - ")) {
+      curStr = ""
+    }
     if (lineItem?.pnc) {
       curStr+=lineItem?.pnc+' '
     } else {
       curStr+=' '
+    }
+    if (!ws.placeholdersNBrackets) {
+      const tempStr1 = curStr.replace(/vvv/g,"")
+      const tempStr2 = tempStr1.replace(/\. \. \./g,"")
+      const tempStr3 = tempStr2.replace(/\[|\]|{|}/g,"")
+      curStr=tempStr3
     }
     if (ws.keepStrongNumbers) {
       content.push({
@@ -118,7 +118,6 @@ export const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
       "type": "note",
       "marker": "f",
       "content": [
-        " ",
         {
           "type": "char",
           "marker": "fr",
@@ -135,7 +134,3 @@ export const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
     })
   }
 }
-
-// ToDo: Check possibly streaming for big size CSV:
-// https://www.papaparse.com/faq#streaming
-// https://deadsimplechat.com/blog/csv-files-with-nodejs-papaparse/

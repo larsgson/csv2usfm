@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import Header from './Header'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import { USFMParser } from 'usfm-grammar-web'
 import SimpleEditor from './SimpleEditor'
 import TextField from "@mui/material/TextField"
 
-// import {htmlText} from '../data/ruth'
-import {csvData} from '../data/titus-csv'
+//import {csvData} from '../data/bsb_tables_csv'
+import {csvData} from '../data/ruth-csv'
 // import html2usfm from '../util/html2usfmParser'
 import csv2usj from '../util/csv2usjParser'
 
@@ -36,6 +37,8 @@ export default function AppLayout() {
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [keepStrongNumbers, setKeepStrongNumbers] = useState(false)
+  const [placeholdersNBrackets, setPlaceholdersNBrackets] = useState(false)
+  
 
   useEffect(() => {
     const initParser = async () => {
@@ -47,9 +50,25 @@ export default function AppLayout() {
   }, []);
 
   const handleClose = () => setModalOpen(false)
-
+  
+  const handleCompleted = (resUsj) => {
+    setUsjLoaded(true)
+    setUsjText(JSON.stringify(resUsj))
+    const usfmParser2 = new USFMParser(null, resUsj) 
+    const usfmStr = usfmParser2.usfm;
+    const adaptedStr1 = usfmStr.replace(/ \\v (\d*)/g,"\n\\v $1")
+    const adaptedStr2 = adaptedStr1.replace(/\\v (\d*)\s*\n/g,"\n\\v $1 ")
+    const adaptedStr3 = adaptedStr2.replace(/\s*\n/g,"\n")
+    const adaptedStr4 = adaptedStr3.replace(/\s\s/g," ")
+    setUsfmText(adaptedStr4)
+    setLoading(false)
+    setModalOpen(true)
+  }
+  
   const handleOpen = async () => {
     setLoading(true)
+    csv2usj(csvData,keepStrongNumbers,placeholdersNBrackets,handleCompleted)
+
     // const file = await fileOpen([
     //   {
     //     description: 'USFM - text files',
@@ -74,16 +93,6 @@ export default function AppLayout() {
     // setHtmlText(htmlText)
     // const tempUsfm = JSON.stringify(html2usfm(htmlText))
     // const tmpText = html2usfm(htmlText)
-    const tempUsj = csv2usj(csvData,keepStrongNumbers)
-    setUsjLoaded(true)
-    setUsjText(JSON.stringify(tempUsj))
-    const usfmParser2 = new USFMParser(null, tempUsj) 
-    const usfmStr = usfmParser2.usfm;
-    const adaptedStr1 = usfmStr.replace(/\\v (\d*)\s*\n/g,"\n\\v $1 ")
-    const adaptedStr2 = adaptedStr1.replace(/\s*\n/g,"\n")
-    setUsfmText(adaptedStr2)
-    setLoading(false)
-    setModalOpen(true)
   }
 
   const editorProps = {
@@ -103,7 +112,9 @@ export default function AppLayout() {
           (<Header 
             title={"Csv2Usfm Converter"}
             keepStrongNumbers={keepStrongNumbers}
+            placeholdersNBrackets={placeholdersNBrackets}
             onStrongNumbersChanged={()=>setKeepStrongNumbers(prev => (!prev))}
+            onPlaceholdersNBracketsChanged={()=>setPlaceholdersNBrackets(prev => (!prev))}
             onOpenClick={handleOpen}
           />)}
       </Paper>
