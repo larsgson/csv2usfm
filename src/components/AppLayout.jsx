@@ -55,7 +55,7 @@ export default function AppLayout() {
     }
   
     // Create a new web worker
-    const myWorker = new Worker('src/components/worker.js');
+    const myWorker = new Worker('/worker.js');
 
     // Set up event listener for messages from the worker
     myWorker.onmessage = function (event) {
