@@ -359,7 +359,7 @@ onmessage = function (event) {
   console.log('Received message from the main thread:', event.data)
   console.log(event.data)
   const {keepStrongNumbers,placeholders,brackets} = event.data
-  fetch(`bsb_tables.csv`)
+  fetch(`/bsb_tables.csv`)
   .then(response => {
     response.text().then(txt => {
       csv2usj(txt,keepStrongNumbers,placeholders,brackets)
