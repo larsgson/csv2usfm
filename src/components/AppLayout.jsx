@@ -1,44 +1,27 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react'
-// import { fileOpen } from 'browser-fs-access'
 import Header from './Header'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import { USFMParser } from 'usfm-grammar-web'
-import SimpleEditor from './SimpleEditor'
+import Typography from "@mui/material/Typography"
 import TextField from "@mui/material/TextField"
+import JSZip from 'jszip'
 
-//import {csvData} from '../data/bsb_tables_csv'
-import {csvData} from '../data/ruth-csv'
-// import html2usfm from '../util/html2usfmParser'
-import csv2usj from '../util/csv2usjParser'
-
-import Modal from '@mui/material/Modal'
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 700,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-}
+const zip = new JSZip();
 
 export default function AppLayout() {
   // eslint-disable-next-line no-unused-vars
   const [usfmText, setUsfmText] = useState()
-  const [usjText, setUsjText] = useState()
   const [usjLoaded, setUsjLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
   const [keepStrongNumbers, setKeepStrongNumbers] = useState(false)
-  const [placeholdersNBrackets, setPlaceholdersNBrackets] = useState(false)
+  const [placeholders, setPlaceholders] = useState(false)
+  const [brackets, setBrackets] = useState(false)
   
+  const [result, setResult] = useState(null);
+  const [worker, setWorker] = useState(null);
 
   useEffect(() => {
     const initParser = async () => {
@@ -47,53 +30,55 @@ export default function AppLayout() {
 
     };
     initParser();
-  }, []);
 
-  const handleClose = () => setModalOpen(false)
-  
-  const handleCompleted = (resUsj) => {
-    setUsjLoaded(true)
-    setUsjText(JSON.stringify(resUsj))
-    const usfmParser2 = new USFMParser(null, resUsj) 
-    const usfmStr = usfmParser2.usfm;
-    const adaptedStr1 = usfmStr.replace(/ \\v (\d*)/g,"\n\\v $1")
-    const adaptedStr2 = adaptedStr1.replace(/\\v (\d*)\s*\n/g,"\n\\v $1 ")
-    const adaptedStr3 = adaptedStr2.replace(/\s*\n/g,"\n")
-    const adaptedStr4 = adaptedStr3.replace(/\s\s/g," ")
-    setUsfmText(adaptedStr4)
-    setLoading(false)
-    setModalOpen(true)
-  }
-  
-  const handleOpen = async () => {
-    setLoading(true)
-    csv2usj(csvData,keepStrongNumbers,placeholdersNBrackets,handleCompleted)
+    const handleCompleted = (resUsj,bookIdStr) => {
+      zip.file(`${bookIdStr}.usj`, JSON.stringify(resUsj)); // adds the USJ data to the zip file
+      const usfmParser2 = new USFMParser(null, resUsj) 
+      const usfmStr = usfmParser2.usfm;
+      const adaptedStr1 = usfmStr.replace(/ \\v (\d*)/g,"\n\\v $1")
+      const adaptedStr2 = adaptedStr1.replace(/\\v (\d*)\s*\n/g,"\n\\v $1 ")
+      const adaptedStr3 = adaptedStr2.replace(/\s*\n/g,"\n")
+      const adaptedStr4 = adaptedStr3.replace(/\s\s/g," ")
+      zip.file(`${bookIdStr}.usfm`, adaptedStr4); // adds the USFM data to the zip file  
+    }
 
-    // const file = await fileOpen([
-    //   {
-    //     description: 'USFM - text files',
-    //     mimeTypes: ['text/*'],
-    //     extensions: ['.usfm'],
-    //   }
-    // ])
-    // const filePath = file?.name
-    // if (filePath !== null) {
-    //   const extStr = filePath?.substring(filePath?.lastIndexOf("."))
-    //   if (extStr === ".usfm") {
-    //     const contents = await await file.text()
-    //     setUsfmText(contents)
-    //     setHtmlFileLoaded(true)
-    //     setLoading(false)
-    //   } else {
-    //     console.log("invalid file extension")
-    //   }
-    // } else {
-    //   console.log("invalid file")
-    // }
-    // setHtmlText(htmlText)
-    // const tempUsfm = JSON.stringify(html2usfm(htmlText))
-    // const tmpText = html2usfm(htmlText)
-  }
+    const handleParseFinished = async () => {
+      // csv2usj(keepStrongNumbers,placeholders,brackets,handleCompleted)
+      const zipData = await zip.generateAsync({
+        type: "blob",
+        streamFiles: true
+      })
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(zipData);
+      link.download = `BSB.zip`
+      link.click();
+    }
+  
+    // Create a new web worker
+    const myWorker = new Worker('src/components/worker.js');
+
+    // Set up event listener for messages from the worker
+    myWorker.onmessage = function (event) {
+      const bookIdStr = event?.data?.bookIdStr
+      const usjObj = event?.data?.usjObj
+      console.log('Received result from worker:', bookIdStr);
+      setResult(bookIdStr);
+      handleCompleted(usjObj,bookIdStr)
+      if (event?.data?.parserFinished) {
+        setLoading(false)
+        handleParseFinished()
+      }
+    };
+
+    // Save the worker instance to state
+    setWorker(myWorker);
+
+    // Clean up the worker when the component unmounts
+    return () => {
+      myWorker.terminate();
+    };
+  }, []); // Run this effect only once when the component mounts
+ 
 
   const editorProps = {
     docSetId: 'abc-xyz',
@@ -105,6 +90,18 @@ export default function AppLayout() {
       preview: true,
     }
   }
+  const handleClick = () => {
+    setLoading(true)
+    if (worker) {
+      const paramObj = {
+        keepStrongNumbers,
+        placeholders,
+        brackets,
+      }
+      worker.postMessage(paramObj) // Send the number 5 to the worker
+    }
+  }
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Paper sx={{ position: 'fixed', top: 0, left: 0, right: 0 }} elevation={3}>
@@ -112,29 +109,15 @@ export default function AppLayout() {
           (<Header 
             title={"Csv2Usfm Converter"}
             keepStrongNumbers={keepStrongNumbers}
-            placeholdersNBrackets={placeholdersNBrackets}
+            placeholders={placeholders}
+            brackets={brackets}
             onStrongNumbersChanged={()=>setKeepStrongNumbers(prev => (!prev))}
-            onPlaceholdersNBracketsChanged={()=>setPlaceholdersNBrackets(prev => (!prev))}
-            onOpenClick={handleOpen}
+            onPlaceholdersChanged={()=>setPlaceholders(prev => (!prev))}
+            onBracketsChanged={()=>setBrackets(prev => (!prev))}
+            // onOpenClick={handleOpen}
+            onOpenClick={handleClick}
           />)}
       </Paper>
-      {/* <div>
-        <Modal
-          open={modalOpen}
-          onClose={handleClose}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-              USJ ouput (only during the testing phase)
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              <span>{usjText}</span>
-          </Typography>
-          </Box>
-        </Modal>
-      </div> */}
       {usjLoaded && (
         <>
           <TextField
@@ -148,7 +131,6 @@ export default function AppLayout() {
               marginTop: 3,
             }}
           />
-          <SimpleEditor {...editorProps } />
         </>
       )}
       {loading && (
@@ -161,7 +143,16 @@ export default function AppLayout() {
           <CircularProgress disableShrink/>
         </Box>
       )}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            paddingTop: '250px' 
+          }}>
+        <Typography id="result-from-worker" variant="h6" component="h2">
+        Result from the worker: {result}
+        </Typography>
+      </Box>
     </Box>
-
   )
 }

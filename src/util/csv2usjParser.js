@@ -2,6 +2,7 @@
 import Papa from 'papaparse'
 import {generateBookName, parseLinePart1, parseLinePart2} from '../util/singleLineParser'
 import {name2id3} from '../data/name2id3'
+import {csvData} from '../data/bsb_tables_csv'
 
 const getBcvObj = (lineObj) => {
   let resObj = {}
@@ -24,9 +25,6 @@ const getBcvObj = (lineObj) => {
   }
   return resObj
 }
-
-// const parseBookId = "TIT"
-const parseBookId = "RUT"
 
 const joinIfStr = (arr) => {
   const retObj = arr.reduce(
@@ -51,16 +49,17 @@ const joinIfStr = (arr) => {
   return retObj.retArr    
 }
 
-const csv2usj = (csvData,keepStrongNumbers,placeholdersNBrackets,onCompleted) => {
+const csv2usj = (keepStrongNumbers,placeholders,brackets,onCompleted) => {
   const ws = {
     keepStrongNumbers,
-    placeholdersNBrackets
+    placeholders,
+    brackets
   }
   const usjObj = {
     type: "USJ",
     version: "3.1",
   }
-  const topArr = []
+  let topArr = []
   let level1Arr = []
   let curBook = ""
 
@@ -84,17 +83,8 @@ const csv2usj = (csvData,keepStrongNumbers,placeholdersNBrackets,onCompleted) =>
           console.log(curBook)
         }
       }
-      if ((bcvObj?.ptxId === parseBookId) && (bcvObj?.ch === 1) && (bcvObj?.v === 1)) {
-        ws.curPtxId = bcvObj.ptxId
-        ws.curBookName = bcvObj.bookName
-        generateBookName(topArr,bcvObj)
-      }
-      if (ws?.curPtxId === parseBookId) {
-        // Strategy
-        // - separate top level and level_1 based on any Par marker present in this line
-        const curCh = bcvObj?.ch
-        const newCh = ((curCh) && (ws.curCh !== bcvObj.ch)) 
-        if ((lineObj?.Par) && ((newCh) || (level1Arr.length>0))) {
+      if ((bcvObj?.ch === 1) && (bcvObj?.v === 1)) {
+        if ((topArr) && (topArr.length>0)) {
           if (level1Arr.length>0) {
             // Now dump all current level_1 content into a paragraph (in the content field)
             topArr.push({
@@ -102,16 +92,37 @@ const csv2usj = (csvData,keepStrongNumbers,placeholdersNBrackets,onCompleted) =>
               marker: "p",
               content: joinIfStr(level1Arr)
             })
-            level1Arr = []    
           }
-          parseLinePart1(ws,topArr,lineObj,bcvObj)
-          // Keep all content from now on in level1Arr
-          parseLinePart2(ws,level1Arr,lineObj,bcvObj)
-        } else {
-          // Keep all content in level1Arr
-          parseLinePart1(ws,level1Arr,lineObj,bcvObj)
-          parseLinePart2(ws,level1Arr,lineObj,bcvObj)
+          level1Arr = []
+          usjObj.content = topArr    
+          onCompleted && onCompleted(usjObj,ws.curPtxId)
+          topArr = []
+        }  
+        ws.curPtxId = bcvObj.ptxId
+        ws.curBookName = bcvObj.bookName
+        generateBookName(topArr,bcvObj)
+      }
+      // Strategy
+      // - separate top level and level_1 based on any Par marker present in this line
+      const curCh = bcvObj?.ch
+      const newCh = ((curCh) && (ws.curCh !== bcvObj.ch)) 
+      if ((lineObj?.Par) && ((newCh) || (level1Arr.length>0))) {
+        if (level1Arr.length>0) {
+          // Now dump all current level_1 content into a paragraph (in the content field)
+          topArr.push({
+            type: "para",
+            marker: "p",
+            content: joinIfStr(level1Arr)
+          })
+          level1Arr = []    
         }
+        parseLinePart1(ws,topArr,lineObj,bcvObj)
+        // Keep all content from now on in level1Arr
+        parseLinePart2(ws,level1Arr,lineObj,bcvObj)
+      } else {
+        // Keep all content in level1Arr
+        parseLinePart1(ws,level1Arr,lineObj,bcvObj)
+        parseLinePart2(ws,level1Arr,lineObj,bcvObj)
       }
     },
     complete: function() {
@@ -125,8 +136,7 @@ const csv2usj = (csvData,keepStrongNumbers,placeholdersNBrackets,onCompleted) =>
         })
       }
       usjObj.content = topArr
-      console.log(usjObj)
-      onCompleted && onCompleted(usjObj)
+      onCompleted && onCompleted(usjObj,ws.curPtxId)
     },
     // dynamicTyping: true,
   })
