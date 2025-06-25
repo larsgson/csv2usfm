@@ -33,6 +33,7 @@ export default function AppLayout() {
 
     const handleCompleted = (resUsj,bookIdStr) => {
       zip.file(`${bookIdStr}.usj`, JSON.stringify(resUsj)); // adds the USJ data to the zip file
+      console.log(resUsj)
       const usfmParser2 = new USFMParser(null, resUsj) 
       const usfmStr = usfmParser2.usfm;
       const adaptedStr1 = usfmStr.replace(/ \\v (\d*)/g,"\n\\v $1")
@@ -98,7 +99,7 @@ export default function AppLayout() {
         placeholders,
         brackets,
       }
-      worker.postMessage(paramObj) // Send the number 5 to the worker
+      worker.postMessage(paramObj) // Send the paramObj to the worker
     }
   }
 

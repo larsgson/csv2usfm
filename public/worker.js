@@ -21,6 +21,7 @@ const name2id3 = {
   "Nehemiah": "NEH",
   "Esther": "EST",
   "Job": "JOB",
+  "Psalm": "PSA",
   "Psalms": "PSA",
   "Proverbs": "PRO",
   "Ecclesiastes": "ECC",
@@ -76,9 +77,9 @@ const name2id3 = {
 //   return doc.body.textContent || ""
 // }
 
-function strip(str){
-  return str.trim()
-}
+const strip = (str) => str.trim()
+
+const splitAt = (index, xs) => [xs.slice(0, index), xs.slice(index)]
 
 const generateBookName = (content,bcvObj) => {
   content.push({
@@ -119,6 +120,38 @@ const generateBookName = (content,bcvObj) => {
   })  
 }
 
+const stripHeader = (str) => {
+  const tempStr = strip(str)
+  const tempStr2 = tempStr.replace(/<p class=\|hdg\|>/g, "")
+  return tempStr2
+}
+
+const removeTags = (str) => {
+  return str.replace(/<[^>]*>/g, '')
+               .replace(/\s{2,}/g, '')
+               .trim();
+}
+
+const replaceUnneeded = (str) => {
+  let tempStr = str.replace(/ʼ/g, "’") // replace "ʼ" with "’"
+  // The above should hopefully be possible to handle - in reverse - from the generated usj from Martin Hosken
+  tempStr = tempStr.replace(/(\S+ )\s+/g, "$1") // remove multiple " "
+  tempStr = tempStr.replace(/ \. /g, ". ") // replace " . " with ". "
+  tempStr = tempStr.replace(/ , /g, ", ") // replace " , " with ", "
+  tempStr = tempStr.replace(/([.|?|!]) ”/g, "$1”") // replace ". ”" with ".”"
+  tempStr = tempStr.replace(/, ”/g, ",”") // replace ", ”" with ",”"
+  tempStr = tempStr.replace(/ .”/g, ".”") // replace " .”" with ".”"
+  tempStr = tempStr.replace(/ .’/g, ".’") // replace " .'" with ".'"
+  tempStr = tempStr.replace(/“ (\S+)/g, "“$1") // replace "“ " with "“"
+  tempStr = tempStr.replace(/”(\S+)/g, "” $1") // replace "”" with "” "
+  // remove " " at the beginning (trim)
+  tempStr = strip(tempStr)
+  // if (str!==tempStr) {
+  //   console.log("'"+str+"' -> '"+tempStr+"'")
+  // }
+  return tempStr
+}
+
 const parseLinePart1 = (ws,content,lineItem,bcvObj) => {
   const curCh = bcvObj?.ch
   if ((curCh) && (ws.curCh !== bcvObj.ch)) {
@@ -134,14 +167,14 @@ const parseLinePart1 = (ws,content,lineItem,bcvObj) => {
     content.push({
       type: "para",
       marker: "s1",
-      content: [ `${strip(lineItem.Hdg)}` ]
+      content: [ stripHeader(lineItem.Hdg) ]
     })
   }
   if (lineItem?.Crossref) {
     content.push({
       type: "para",
       marker: "r",
-      content: [ `${strip(lineItem.Crossref)}` ]
+      content: [ `${removeTags(lineItem.Crossref)}` ]
     })
   }
 }
@@ -158,39 +191,87 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
     })
   }
   if (lineItem?.space) content.push(lineItem?.space)
-  if (lineItem?.begQ) content.push(lineItem?.begQ)  
+  let curStr = ""
+  if (lineItem?.begQ) curStr = lineItem?.begQ
   if (lineItem?.BSBversion) {
-    let curStr = lineItem.BSBversion?.trim()
+    let addStr = lineItem.BSBversion?.trim()
     if (!ws.brackets) {
       if (lineItem.BSBversion === " - ") {
-        curStr = ""
+        addStr = ""
       }
-      const tempStr1 = curStr
-      curStr = tempStr1.replace(/\. \. \./g,"")
+      const tempStr1 = addStr
+      addStr = strip(tempStr1.replace(/\. \. \./g,""))
     }
-    if (lineItem?.pnc) {
-      curStr+=lineItem?.pnc+' '
-    } else {
-      curStr+=' '
-    }
-    if (!ws.brackets) {
-      const tempStr1 = curStr.replace(/vvv/g,"")
-      const tempStr2 = tempStr1.replace(/\[|\]|{|}/g,"")
-      curStr=tempStr2
-    }
-    if (ws.keepStrongNumbers) {
-      content.push({
-        type: "char",
-        marker: "w",
-        content: [ `${curStr}` ],
-        strong: lineItem?.StrGrk
-      })
-    } else {
-      content.push(curStr)
-    }
+    curStr+=addStr
   }
-  if (lineItem?.endQ) content.push(lineItem.endQ)
+  if (!ws.brackets) {
+    const tempStr1 = curStr.replace(/vvv/g,"")
+    const tempStr2 = tempStr1.replace(/\[|\]|{|}/g,"")
+    curStr=tempStr2
+  }
+  if (lineItem?.endQ === "?") console.log(lineItem)
+  if (lineItem?.pnc) {
+    if (lineItem?.endQ) {
+      curStr+=lineItem?.pnc+lineItem?.endQ+' '
+    } else {
+      curStr+=lineItem?.pnc+' '
+    }
+  } else if (lineItem?.endQ) {
+    curStr+=lineItem.endQ
+  } else {
+    curStr+=' '
+  }
+  if (lineItem?.Verse==="28000") {
+    console.log(lineItem)
+    console.log(curStr)
+  }
+  if (ws.keepStrongNumbers) {
+    content.push({
+      type: "char",
+      marker: "w",
+      content: [ `${curStr}` ],
+      strong: lineItem?.StrGrk
+    })
+  } else {
+    content.push(curStr)
+  }
   if (lineItem?.footnotes) {
+    let newFtStr = strip(lineItem?.footnotes.replace(/<i>(.+?)<\/i>/g,"$1"))
+    let xtStr
+    let ftContent
+    const xtFoundPos = newFtStr.indexOf("; see ")
+    if (xtFoundPos>=0) {
+      const twoParts = splitAt(xtFoundPos +6, newFtStr)
+      newFtStr = strip(twoParts[0])
+      xtStr = twoParts[1]
+      const regexp = /(.*\d*)(\D.*)/g // Search for any Bible reference remainder after the last number
+      const tmpResArr = [...xtStr.matchAll(regexp)]
+      const resArr = tmpResArr[0]
+      if (resArr[0].length>2) {
+        xtStr = resArr[1]
+        const ftEndPart = resArr[2]
+        ftContent = [ 
+          newFtStr,
+          {
+            type: "char",
+            marker: "xt",
+            content: [ xtStr ]
+          },
+          ftEndPart
+        ]  
+      } else {
+        ftContent = [ 
+          newFtStr,
+          {
+            type: "char",
+            marker: "xt",
+            content: [ xtStr ]
+          }
+        ]
+      }
+    } else {
+      ftContent = [ `${newFtStr}` ]
+    }
     content.push({
       "type": "note",
       "marker": "f",
@@ -198,17 +279,19 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
         {
           "type": "char",
           "marker": "fr",
-          "content": [ `${ws.curCh}:${ws.curV} ` ]
+          "content": [ `${ws.curCh}:${ws.curV}` ]
         },
         {
           "type": "char",
           "marker": "ft",
-          "content": [ `${lineItem.footnotes}` ]
+          "content": ftContent
         }
       ],
       "caller": "+"
-
     })
+  }
+  if (lineItem?.Endtext) {
+    content.push(lineItem?.Endtext)
   }
 }
 
@@ -241,7 +324,7 @@ const joinIfStr = (arr) => {
         acc.tempStr += val // join to tempStr
       } else {
         if (acc.tempStr?.length>0) {
-          acc.retArr.push(acc.tempStr) // push tempStr
+          acc.retArr.push(replaceUnneeded(acc.tempStr))
           acc.tempStr = "" // reset tempStr  
         }
         acc.retArr.push(val)
@@ -253,7 +336,7 @@ const joinIfStr = (arr) => {
       retArr: []
     }      
   )
-  if (retObj.tempStr?.length>0) retObj.retArr.push(retObj.tempStr)
+  if (retObj.tempStr?.length>0) retObj.retArr.push(replaceUnneeded(retObj.tempStr))
   return retObj.retArr    
 }
 
@@ -269,6 +352,7 @@ const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
   }
   let topArr = []
   let level1Arr = []
+  let storedPMarker = "p"
   let curBook = ""
 
   // ToDo: Check possibly streaming for big size CSV:
@@ -283,7 +367,7 @@ const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
       const lineObj = result?.data
       // Process each row of the csv as it is parsed
       const bcvObj = getBcvObj(lineObj)
-      if (result?.data?.VerseId) {
+      if (lineObj?.VerseId) {
         if (curBook !== bcvObj.bookName) {
           curBook = bcvObj.bookName
           console.log(curBook)
@@ -317,15 +401,32 @@ const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
       const newCh = ((curCh) && (ws.curCh !== bcvObj.ch)) 
       if ((lineObj?.Par) && ((newCh) || (level1Arr.length>0))) {
         if (level1Arr.length>0) {
+          const checkStr = lineObj?.Par
+          let marker = storedPMarker
+          storedPMarker = "p" // regular marker - as default
+          const regexp = /<p class=\|([A-Z|a-z]*)(\d*)/g
+          const resArr = [...checkStr.matchAll(regexp)]
+          if (resArr) {
+            const matchObj = resArr[0]
+            if (matchObj && matchObj.length>2) {
+              const idStr = matchObj[1]
+              if (idStr==="list") {
+                storedPMarker = `li${matchObj[2]}` // li(nbr)
+              } else if (idStr==="indent") {
+                storedPMarker = `q${matchObj[2]}` // q(nbr)
+              }
+            }
+          }
           // Now dump all current level_1 content into a paragraph (in the content field)
           topArr.push({
             type: "para",
-            marker: "p",
+            marker,
             content: joinIfStr(level1Arr)
           })
           level1Arr = []    
         }
         parseLinePart1(ws,topArr,lineObj,bcvObj)
+        // console.log(topArr)
         // Keep all content from now on in level1Arr
         parseLinePart2(ws,level1Arr,lineObj,bcvObj)
       } else {
@@ -340,7 +441,7 @@ const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
         // Now dump all current level_1 content into a paragraph (in the content field)
         topArr.push({
           type: "para",
-          marker: "p",
+          marker: storedPMarker,
           content: joinIfStr(level1Arr)
         })
       }
@@ -356,10 +457,11 @@ const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
 }
 
 onmessage = function (event) {
-  console.log('Received message from the main thread:', event.data)
+  console.log('Received message from the main thread:')
   console.log(event.data)
   const {keepStrongNumbers,placeholders,brackets} = event.data
   fetch(`/bsb_tables.csv`)
+  // fetch(`/rom.csv`)
   .then(response => {
     response.text().then(txt => {
       csv2usj(txt,keepStrongNumbers,placeholders,brackets)
