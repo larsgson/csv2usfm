@@ -176,14 +176,14 @@ const convertItalicsTags = (arr,str) => {
       // console.log(curStr)
       const fqEndPos = curStr.indexOf(fqEndIdStr)
       if (fqEndPos>=0) {
-        const tempStr = curStr.slice(fqEndPos+fqEndIdLen)
+        const tempStr = curStr.slice(fqIdLen,fqEndPos)
         arr.push({
           "type": "char",
           "marker": "fq",
           "content": [ removeTags(tempStr) ]
         })
         // console.log(arr)
-        // console.log(curStr.slice(fqIdLen,fqEndPos))
+        // console.log(removeTags(tempStr))
       }
       const newStr2 = curStr.slice(fqEndPos+fqEndIdLen)
       curStr = newStr2
