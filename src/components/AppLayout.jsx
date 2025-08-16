@@ -80,17 +80,6 @@ export default function AppLayout() {
     };
   }, []); // Run this effect only once when the component mounts
  
-
-  const editorProps = {
-    docSetId: 'abc-xyz',
-    usfmText,
-    defaultOptions:{
-      editable: false,
-      sectionable: false,
-      blockable: false,
-      preview: true,
-    }
-  }
   const handleClick = () => {
     setLoading(true)
     if (worker) {

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 // eslint-disable-next-line no-undef
-importScripts("papaparse.min.js")
+importScripts("papaparse.min.js","en_bcv_parser.min.js")
 
 const name2id3 = {
   "Genesis": "GEN",
@@ -79,8 +79,6 @@ const name2id3 = {
 
 const strip = (str) => str.trim()
 
-const splitAt = (index, xs) => [xs.slice(0, index), xs.slice(index)]
-
 const generateBookName = (content,bcvObj) => {
   content.push({
     type: "book",
@@ -132,18 +130,89 @@ const removeTags = (str) => {
                .trim();
 }
 
+const convertItalicsTags = (arr,str) => {
+  const fqaIdStr = "literally "
+  const fqaIdLen = fqaIdStr.length
+  const fqIdStr = "<i>"
+  const fqIdLen = fqIdStr.length
+  const fqaFullIdStr = fqaIdStr+fqIdStr
+  const fqaFullIdLen = fqaFullIdStr.length
+  const fqEndIdStr = "</i>"
+  const fqEndIdLen = fqEndIdStr.length
+  let done = false
+  let curStr = strip(str)
+  while (!done) {
+    const fqaPos = curStr.toLowerCase().indexOf(fqaFullIdStr)
+    const fqPos = curStr.indexOf(fqIdStr)
+    if ((fqaPos>=0) && ((fqPos<0) || (fqPos>fqaPos))) {
+      if (fqaPos>0) {
+        arr.push(curStr.slice(0,fqaPos+fqaIdLen))
+        // console.log(curStr.slice(0,fqaPos+fqaIdLen))
+      }
+      const newStr = curStr.slice(fqaPos)
+      curStr = newStr
+      // console.log(curStr)
+      const fqaEndPos = curStr.indexOf(fqEndIdStr)
+      if (fqaEndPos>=0) {
+        const tempStr = curStr.slice(fqaFullIdLen,fqaEndPos).replace(/ {2}/g, " ") // replace "  " with " "
+        arr.push({
+          "type": "char",
+          "marker": "fqa",
+          "content": [ removeTags(tempStr) ]
+        })
+        // console.log(curStr.slice(fqaFullIdLen,fqaEndPos))
+      }
+      const newStr2 = curStr.slice(fqaEndPos+fqEndIdLen)
+      curStr = newStr2
+      // console.log(curStr)
+      // console.log("fqa "+str)
+    } else if (fqPos>=0) {
+      if (fqPos>0) {
+        arr.push(curStr.slice(0,fqPos))
+        // console.log(curStr.slice(0,fqPos))
+      }
+      const newStr = curStr.slice(fqPos)
+      curStr = newStr
+      // console.log(curStr)
+      const fqEndPos = curStr.indexOf(fqEndIdStr)
+      if (fqEndPos>=0) {
+        const tempStr = curStr.slice(fqIdLen,fqEndPos)
+        arr.push({
+          "type": "char",
+          "marker": "fq",
+          "content": [ removeTags(tempStr) ]
+        })
+        // console.log(arr)
+        // console.log(removeTags(tempStr))
+      }
+      const newStr2 = curStr.slice(fqEndPos+fqEndIdLen)
+      curStr = newStr2
+      // console.log(curStr)
+      // console.log("fq "+str)  
+    } else {
+      arr.push(curStr)
+      done = true
+    } 
+  }
+}
+
+
 const replaceUnneeded = (str) => {
   let tempStr = str.replace(/ʼ/g, "’") // replace "ʼ" with "’"
   // The above should hopefully be possible to handle - in reverse - from the generated usj from Martin Hosken
   tempStr = tempStr.replace(/(\S+ )\s+/g, "$1") // remove multiple " "
   tempStr = tempStr.replace(/ \. /g, ". ") // replace " . " with ". "
   tempStr = tempStr.replace(/ , /g, ", ") // replace " , " with ", "
+  tempStr = tempStr.replace(/ ([.|,|:|;|—|)|?|!])/g, "$1") // replace space before"
+  tempStr = tempStr.replace(/([(|—]) /g, "$1") // replace space after"
   tempStr = tempStr.replace(/([.|?|!]) ”/g, "$1”") // replace ". ”" with ".”"
   tempStr = tempStr.replace(/, ”/g, ",”") // replace ", ”" with ",”"
+  tempStr = tempStr.replace(/, ’/g, ",’") // replace ", ’" with ",’"
   tempStr = tempStr.replace(/ .”/g, ".”") // replace " .”" with ".”"
   tempStr = tempStr.replace(/ .’/g, ".’") // replace " .'" with ".'"
   tempStr = tempStr.replace(/“ (\S+)/g, "“$1") // replace "“ " with "“"
   tempStr = tempStr.replace(/”(\S+)/g, "” $1") // replace "”" with "” "
+  tempStr = tempStr.replace(/(\S+) ”/g, "$1”") // replace " ”" with "”"
   // remove " " at the beginning (trim)
   tempStr = strip(tempStr)
   // if (str!==tempStr) {
@@ -192,7 +261,9 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
   }
   if (lineItem?.space) content.push(lineItem?.space)
   let curStr = ""
-  if (lineItem?.begQ) curStr = lineItem?.begQ
+  if (lineItem?.begQ) {
+    curStr = lineItem?.begQ
+  }
   if (lineItem?.BSBversion) {
     let addStr = lineItem.BSBversion?.trim()
     if (!ws.brackets) {
@@ -209,7 +280,6 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
     const tempStr2 = tempStr1.replace(/\[|\]|{|}/g,"")
     curStr=tempStr2
   }
-  if (lineItem?.endQ === "?") console.log(lineItem)
   if (lineItem?.pnc) {
     if (lineItem?.endQ) {
       curStr+=lineItem?.pnc+lineItem?.endQ+' '
@@ -221,10 +291,6 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
   } else {
     curStr+=' '
   }
-  if (lineItem?.Verse==="28000") {
-    console.log(lineItem)
-    console.log(curStr)
-  }
   if (ws.keepStrongNumbers) {
     content.push({
       type: "char",
@@ -232,45 +298,79 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
       content: [ `${curStr}` ],
       strong: lineItem?.StrGrk
     })
-  } else {
+  } else if (curStr.length>0) {
     content.push(curStr)
   }
+  let ftContent
   if (lineItem?.footnotes) {
-    let newFtStr = strip(lineItem?.footnotes.replace(/<i>(.+?)<\/i>/g,"$1"))
-    let xtStr
-    let ftContent
-    const xtFoundPos = newFtStr.indexOf("; see ")
-    if (xtFoundPos>=0) {
-      const twoParts = splitAt(xtFoundPos +6, newFtStr)
-      newFtStr = strip(twoParts[0])
-      xtStr = twoParts[1]
-      const regexp = /(.*\d*)(\D.*)/g // Search for any Bible reference remainder after the last number
-      const tmpResArr = [...xtStr.matchAll(regexp)]
-      const resArr = tmpResArr[0]
-      if (resArr[0].length>2) {
-        xtStr = resArr[1]
-        const ftEndPart = resArr[2]
-        ftContent = [ 
-          newFtStr,
-          {
-            type: "char",
-            marker: "xt",
-            content: [ xtStr ]
-          },
-          ftEndPart
-        ]  
-      } else {
-        ftContent = [ 
-          newFtStr,
-          {
-            type: "char",
-            marker: "xt",
-            content: [ xtStr ]
+    let newFtStr = strip(lineItem?.footnotes)
+    let hasRef = false
+    let curInx = 0
+    const parsedBcv = ws.bcv.parse(newFtStr)
+    ftContent = []
+    if (parsedBcv?.entities?.length>0) { // Bible references might have been detected
+      parsedBcv.entities.forEach(e => {
+        if ((e.type!=="b") && (e.type!=="translation_sequence")) {
+          if (e?.passages?.length>0) {
+            if (((e.type==="bcv") || (e.type==="range")) && (e?.absolute_indices)) {
+              // Entity is detected
+              const i0 = e.absolute_indices[0]
+              const i1 = e.absolute_indices[1]
+              const refStr = strip(newFtStr?.substring(i0,i1))
+              const preStr = strip(newFtStr?.substring(curInx,i0))
+              convertItalicsTags(ftContent,preStr)
+              ftContent.push({
+                type: "char",
+                marker: "xt",
+                content: [ refStr ]
+              })
+              curInx = i1
+              hasRef = true
+            } else {
+              const pLen = e.passages?.length
+              e.passages.forEach((p,i) => {
+                if ((p.type!=="b") 
+                  && (p.type!=="translation_sequence") 
+                  && (p.type!=="integer")
+                  && (p?.absolute_indices)) 
+                {
+                  // Passage is detected
+                  const i0 = p.absolute_indices[0]
+                  let i1 = p.absolute_indices[1]
+                  let j = 1
+                  while (pLen>i+j) { // parse integers - as long as they are adjacent
+                    const pNext = e.passages[i+j]
+                    if ((pNext?.type==="integer") && (p?.absolute_indices)) {
+                      i1 = pNext.absolute_indices[1]
+                      j += 1
+                    } else { // end here
+                      j = pLen
+                    }
+                  } 
+                  let refStr = strip(newFtStr?.substring(i0,i1))
+                  const preStr = strip(newFtStr?.substring(curInx,i0))
+                  convertItalicsTags(ftContent,preStr)
+                  ftContent.push({
+                    type: "char",
+                    marker: "xt",
+                    content: [ refStr ]
+                  })
+                  curInx = i1
+                  hasRef = true
+                }
+              })  
+            }
           }
-        ]
+        }
+      })
+      if (hasRef && (curInx !== newFtStr.length)) {
+        const remainingStr = newFtStr?.substring(curInx,newFtStr.length)
+        convertItalicsTags(ftContent,remainingStr)
       }
-    } else {
-      ftContent = [ `${newFtStr}` ]
+    }
+    if (!hasRef) {
+      convertItalicsTags(ftContent,newFtStr)
+      // ftContent = [ `${newFtStr}` ]
     }
     content.push({
       "type": "note",
@@ -290,7 +390,7 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
       "caller": "+"
     })
   }
-  if (lineItem?.Endtext) {
+  if (lineItem?.Endtext && lineItem.Endtext.length>0) {
     content.push(lineItem?.Endtext)
   }
 }
@@ -324,7 +424,8 @@ const joinIfStr = (arr) => {
         acc.tempStr += val // join to tempStr
       } else {
         if (acc.tempStr?.length>0) {
-          acc.retArr.push(replaceUnneeded(acc.tempStr))
+          const dumpStr = replaceUnneeded(acc.tempStr)
+          if (dumpStr.length>0) acc.retArr.push(dumpStr)
           acc.tempStr = "" // reset tempStr  
         }
         acc.retArr.push(val)
@@ -336,12 +437,15 @@ const joinIfStr = (arr) => {
       retArr: []
     }      
   )
-  if (retObj.tempStr?.length>0) retObj.retArr.push(replaceUnneeded(retObj.tempStr))
+  const dumpStr = replaceUnneeded(retObj.tempStr)
+  if (dumpStr.length>0) retObj.retArr.push(dumpStr)
   return retObj.retArr    
 }
 
 const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
   const ws = {
+  // eslint-disable-next-line no-undef
+    bcv : new bcv_parser(),
     keepStrongNumbers,
     placeholders,
     brackets
@@ -355,9 +459,6 @@ const csv2usj = (csvData,keepStrongNumbers,placeholders,brackets) => {
   let storedPMarker = "p"
   let curBook = ""
 
-  // ToDo: Check possibly streaming for big size CSV:
-  // https://www.papaparse.com/faq#streaming
-  // https://deadsimplechat.com/blog/csv-files-with-nodejs-papaparse/
   // eslint-disable-next-line no-undef
   Papa.parse(csvData, {
     header: true,
