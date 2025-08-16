@@ -261,7 +261,9 @@ const parseLinePart2 = (ws,content,lineItem,bcvObj) => {
   }
   if (lineItem?.space) content.push(lineItem?.space)
   let curStr = ""
-  if (lineItem?.begQ) curStr = lineItem?.begQ
+  if (lineItem?.begQ) {
+    curStr = lineItem?.begQ
+  }
   if (lineItem?.BSBversion) {
     let addStr = lineItem.BSBversion?.trim()
     if (!ws.brackets) {
